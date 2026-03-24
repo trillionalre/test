@@ -837,27 +837,98 @@
       </div>
     </section>
   </main>
-<!-- CDN으로 Supabase 불러오기 -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>댓글 기능</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial; max-width: 600px; margin: 50px auto; }
+    input, textarea, button { width: 100%; margin-top: 10px; padding: 10px; }
+    .comment { border-bottom: 1px solid #ddd; padding: 10px 0; }
+    .nickname { font-weight: bold; }
+    .date { color: gray; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+<h2>댓글</h2>
+
+<input id="nickname" placeholder="닉네임" />
+<textarea id="content" placeholder="댓글을 입력하세요"></textarea>
+<button onclick="addComment()">댓글 등록</button>
+
+<h3>댓글 목록</h3>
+<div id="comments"></div>
 
 <script>
-  // Supabase 초기화
-  const supabase = supabase.createClient(
-    'https://jhncfgcsveudyzcswuwo.supabase.co',  // Project URL
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpobmNmZ2NzdmV1ZHl6Y3N3dXdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNTA3OTQsImV4cCI6MjA4OTkyNjc5NH0.uMHsaPJLPeBjZLcFqLvNChhnp3LtKWtcOzwu8KiTXpE'                        // anon public 키
-  );
+  // 🔑 Supabase 설정
+  const supabaseUrl = "https://jhncfgcsveudyzcswuwo.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpobmNmZ2NzdmV1ZHl6Y3N3dXdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNTA3OTQsImV4cCI6MjA4OTkyNjc5NH0.uMHsaPJLPeBjZLcFqLvNChhnp3LtKWtcOzwu8KiTXpE";
 
-  // 댓글 조회
-  const { data } = await supabase
-    .from('comments')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-  // 댓글 작성
-  await supabase
-    .from('comments')
-    .insert({ nickname: '홍길동', content: '안녕하세요!' });
+  // 📌 댓글 불러오기 (최신순)
+  async function loadComments() {
+    const { data, error } = await supabase
+      .from("comments")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const container = document.getElementById("comments");
+    container.innerHTML = "";
+
+    data.forEach(comment => {
+      const div = document.createElement("div");
+      div.className = "comment";
+
+      div.innerHTML = `
+        <div class="nickname">${comment.nickname}</div>
+        <div>${comment.content}</div>
+        <div class="date">${new Date(comment.created_at).toLocaleString()}</div>
+      `;
+
+      container.appendChild(div);
+    });
+  }
+
+  // ✍️ 댓글 추가
+  async function addComment() {
+    const nickname = document.getElementById("nickname").value.trim();
+    const content = document.getElementById("content").value.trim();
+
+    if (!nickname || !content) {
+      alert("닉네임과 댓글을 입력하세요.");
+      return;
+    }
+
+    const { error } = await supabase.from("comments").insert([
+      { nickname, content }
+    ]);
+
+    if (error) {
+      alert("댓글 저장 실패");
+      console.error(error);
+      return;
+    }
+
+    document.getElementById("content").value = "";
+
+    loadComments();
+  }
+
+  // 🚀 최초 로딩
+  loadComments();
 </script>
+
+</body>
+</html>
   <footer>
     <div class="container footer-row">
       <div>© 2026 AI Toolbox Hub. All rights reserved.</div>
